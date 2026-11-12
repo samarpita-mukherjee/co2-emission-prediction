@@ -1,9 +1,9 @@
-# Predicting the CO2 emissions of cars (regression)
+# Predicting the CO2 emissions of cars (Regression Approach)
 
 Question: Can we predict the CO2 emissions (g/km) of a *new* car design from information an engineer already
 knows before the car exists: fuel, power, mass, body type, gearbox, hybrid or not?
 
-Data: `data/cl_JUIN_2013-complet3.csv`, a 2013 catalogue of French car CO2 labelling data
+Data: 'data/cl_JUIN_2013-complet3.csv', a 2013 catalogue of French car CO2 labelling data
 (44,850 rows, 26 columns; 44,192 rows after cleaning).
 
 ## Results
@@ -19,36 +19,36 @@ Final test on 4,533 cars of 90 car models that the model never saw in training:
 Turned into the official French CO2 label (classes A to G), the same predictions give the exact class for 57.9% of
 the cars and a class at most one step away for 98.5% (always guessing the most common class: 6.9% and 42.3%).
 
-These numbers come from `python main.py` (seeds are fixed, so a rerun gives the same numbers).
+These numbers come from 'python main.py' (seeds are fixed, so a rerun gives the same numbers).
 
 ## How to run
 
-```
+'''
 pip install -r requirements.txt
 python main.py
-```
+'''
 
 It takes about 8 to 10 minutes on one CPU. Everything is printed in the terminal, the figures are saved in
-`outputs/figures/` and the trained model in `outputs/co2_final_model.joblib`.
+'outputs/figures/' and the trained model in 'outputs/co2_final_model.joblib'.
 Tested with Python 3.12 (scikit-learn 1.6 or newer is needed).
 
 ## Project structure
 
-```
-main.py                the only file you run: calls the steps below in order
+'''
+main.py                the only file we run: it calls the steps below in order
 src/
   data.py              loading, cleaning, the two built features, the DROPS decisions (one reason per dropped column),
                        the split by car model, the checks
   modeling.py          encoders, the seven models, sample weights, grouped cross-validation, the feature ablation,
                        the tuning check, the final model (train, predict, save)
   evaluation.py        final test, model-comparison figure, error analysis, CO2 label classes A-G
-  eda.py               exploration figures and tables (nothing in the model depends on it)
+  eda.py               exploration figures and tables 
 data/                  the CSV file
 notebooks/             the full analysis as a notebook, with explanations and outputs
 outputs/figures/       figures written by main.py
-```
+'''
 
-## Method in short
+## Method description
 
 1. Cleaning: Rows without CO2 and exact duplicates are removed.
 2. Features: A feature may only be used if it is known before the car exists. So all columns measured in the same
@@ -91,5 +91,5 @@ comparable with it.
 
 ## Notebook
 
-`notebooks/Liora_final_project_simplified.ipynb` contains the same analysis with explanations before every step,
-all the exploration figures and the printed results. Open it with Jupyter from the `notebooks/` folder.
+'notebooks/Liora_final_project_simplified.ipynb' contains the same analysis with explanations before every step,
+all the exploration figures and the printed results. Open it with Jupyter from the 'notebooks/' folder.
