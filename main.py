@@ -24,6 +24,7 @@ def main():
     t0 = time.time()
     data.FIG_DIR.mkdir(parents=True, exist_ok=True)
 
+    step("CO2 emission prediction: Regression approach")
     # ---- 1. Load and clean --------------------------------------------------------------------------
     step("1. Load and clean the data")
     df = data.load_data()
@@ -82,6 +83,7 @@ def main():
     modeling.predict_examples(final_model, ds.X_train.columns)
     modeling.save_model(final_model)
 
+    step("Regression approach completed")
     print(f"\nDone in {(time.time() - t0) / 60:.1f} minutes. Figures: {data.FIG_DIR}")
 
 
