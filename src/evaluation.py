@@ -1,8 +1,8 @@
 """
-evaluation.py 
+evaluation.py - everything that REPORTS results.
 
 The final test (done once), the model-comparison figure, the error analysis and the CO2 label classes A-G.
-Figures are saved to files, so the project also runs on a server.
+Figures are saved to files (no pop-up windows), so the project also runs on a server.
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -116,8 +116,11 @@ def error_analysis(ds, pred, path):
         "kg": X_test["masse vide euro max (kg)"],
         "Actual": y_test.round(0), "Predicted": pred.round(0), "Error": error.round(0)})
     worst_sorted = worst.loc[error.abs().sort_values(ascending=False).index]
+    worst_top = worst_sorted.drop_duplicates(subset=["Model", "Description", "kW", "kg", "Actual", "Predicted"]).head(10)
     print("The 10 biggest mistakes (one line per distinct car):")
-    print(worst_sorted.drop_duplicates(subset=["Model", "Description", "kW", "kg", "Actual", "Predicted"]).head(10).to_string())
+    print(worst_top.to_string())
+    fuel_table = pd.DataFrame({"MAE (g/km)": mae_by_fuel, "test cars": fuel_group.value_counts().reindex(mae_by_fuel.index)})
+    return {"worst_mistakes": worst_top, "error_by_fuel": fuel_table}
     # HOW TO READ THIS: look at what is special about these cars (very powerful, very heavy, special technology, hybrids).
     # Our features do not describe everything about a car, so a few big misses are normal.
 
@@ -174,3 +177,50 @@ def label_classes(ds, final_model, path):
     plt.tight_layout()
     plt.savefig(path, dpi=300, bbox_inches="tight")
     plt.close()
+    return {"class_counts": counts, "class_scores": class_table, "confusion_matrix": pd.DataFrame(cm, index=LABELS, columns=LABELS)}
+
+
+# =================================================================================================
+# 5. Results for the Streamlit app (small CSV files and one JSON file; the app never retrains anything)
+# =================================================================================================
+def build_facts(df_raw, df_clean, ds, final_model, tuning, target_stats):
+    """The numbers about the data and the model that the app shows (everything is computed here, nothing is typed by hand)."""
+    import sys
+    import lightgbm
+    import sklearn
+    from src.data import TARGET, VANS
+
+    cat_enc = final_model.named_steps["prep"].named_transformers_["cat"]
+    infrequent = [list(i) if i is not None else [] for i in cat_enc.infrequent_categories_]
+    X_tr = ds.X_train
+    return {
+        "rows_raw": int(len(df_raw)), "columns_raw": int(df_raw.shape[1]),
+        "rows_without_co2": int(df_raw[TARGET].isna().sum()),
+        "duplicate_rows": int(df_raw.dropna(subset=[TARGET]).duplicated().sum()),
+        "rows_clean": int(len(df_clean)),
+        "car_models": int(ds.groups.nunique()), "car_models_train": int(ds.g_train.nunique()), "car_models_test": int(ds.g_test.nunique()),
+        "rows_train": int(len(ds.X_train)), "rows_test": int(len(ds.X_test)),
+        "mercedes_share_pct": round(float(ds.is_merc.mean() * 100), 1),
+        "vans_share_pct": round(float(ds.groups.isin(VANS).mean() * 100), 1),
+        "co2": target_stats,
+        "co2_mean_train": round(float(ds.y_train.mean()), 1), "co2_mean_test": round(float(ds.y_test.mean()), 1),
+        "ranges": {"power_kw": [float(X_tr["Puissance maximale (kW)"].min()), float(X_tr["Puissance maximale (kW)"].max())],
+                   "mass_kg": [float(X_tr["masse vide euro max (kg)"].min()), float(X_tr["masse vide euro max (kg)"].max())],
+                   "gears": [float(X_tr["nb_rapports"].min()), float(X_tr["nb_rapports"].max())]},
+        "categories": {"fuel": [str(c) for c in cat_enc.categories_[0]], "body": [str(c) for c in cat_enc.categories_[1]],
+                       "gearbox": [str(c) for c in cat_enc.categories_[2]]},
+        "infrequent": {"fuel": [str(c) for c in infrequent[0]], "body": [str(c) for c in infrequent[1]], "gearbox": [str(c) for c in infrequent[2]]},
+        "tuning": {"use_tuned": bool(tuning["use_tuned"]), "params": {k: (float(v) if isinstance(v, float) else int(v)) for k, v in tuning["params"].items()}},
+        "versions": {"python": sys.version.split()[0], "scikit-learn": sklearn.__version__, "lightgbm": lightgbm.__version__},
+    }
+
+
+def save_app_results(out_dir, tables, facts):
+    """Write every table as a CSV file and the facts as one JSON file into out_dir (results/regression)."""
+    import json
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, table in tables.items():
+        table.to_csv(out_dir / f"{name}.csv")
+    with open(out_dir / "key_facts.json", "w", encoding="utf-8") as f:
+        json.dump(facts, f, indent=2, ensure_ascii=False, default=str)
+    print(f"Saved {len(tables)} tables and key_facts.json in {out_dir}")

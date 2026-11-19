@@ -1,8 +1,8 @@
 """
-data.py 
+data.py - everything about the DATA.
 
-Loading, cleaning, the two engineered features, the decision about which columns are dropped,
-and the train/test split by car model.
+Loading, cleaning, the two engineered features, the decision about 
+which columns are dropped, and the train/test split by car model.
 """
 from dataclasses import dataclass
 from pathlib import Path
@@ -66,7 +66,7 @@ DROPS = {
 # 1. Load and clean
 # =================================================================================================
 def load_data(path=DATA_PATH):
-    """Read the raw CSV (separator ';', French accents -> latin1)."""
+    """Reading the raw CSV (separator ';', French accents -> latin1)."""
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"Data file not found: {path}\nPut cl_JUIN_2013-complet3.csv in the data/ folder.")
@@ -74,7 +74,7 @@ def load_data(path=DATA_PATH):
 
 
 def clean_data(df):
-    """Remove rows without CO2 and exact duplicate rows.
+    """Removing rows without CO2 and exact duplicate rows.
 
     Rows without the target cannot be used for learning. Duplicates would count the same car twice and could
     end up in both train and test. Duplicates are found by comparing ALL columns, so this must be done
@@ -92,7 +92,8 @@ def clean_data(df):
 # 2. Features and split
 # =================================================================================================
 def add_features(df_clean):
-    """Build the two features that are not in the raw data (no learning involved, so this is safe before the split).
+    """Building the two features that are not in the raw data 
+       (no learning involved, so this is safe before the split).
 
     - 'Hybride' is text 'oui'/'non' -> binary 0/1.
     - 'Boîte de vitesse' (e.g. 'M 6') packs 2 facts: transmission type + number of gears."""
@@ -193,6 +194,8 @@ def check_split(ds):
     }, index=["train", "test"]).round(1)
     print(comp.to_string())
     print("\nThe three largest car models of the test set (% of the test rows):")
-    print((ds.g_test.value_counts(normalize=True).head(3) * 100).round(1))
-    # HOW TO READ THIS: with SPLIT_SEED = 42 all three van models are in train, so the test set has no vans.
+    largest = (ds.g_test.value_counts(normalize=True).head(3) * 100).round(1)
+    print(largest)
+    return {"composition": comp, "largest_test_models": largest}
+    # With SPLIT_SEED = 42 all three van models are in train, so the test set has no vans.
     # The test score therefore measures "ordinary cars of unseen models", a fair test for a NEW car design.

@@ -1,8 +1,8 @@
 """
-eda.py
+eda.py - EXPLORATION of the data (figures and tables).
 
-Nothing in the model depends on this file: it is doing the exploration of data.
-Figures are saved to files.
+Nothing in the model depends on this file: it shows what is in the data and gives the evidence for some choices
+(for example why consumption cannot be used as a feature). Figures are saved to files, no pop-up windows.
 """
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -31,6 +31,10 @@ def target_and_consumption(df_clean, fig_dir):
           f"skewness {df_clean[CO2].skew():.2f}")
     print(f"Share of the three main fuels (GO, ES, EH): {df_clean['Carburant'].isin(MAIN_FUELS).mean() * 100:.1f}%")
     print(f"Correlation consumption vs CO2: {df_clean[[CONSO, CO2]].corr().iloc[0, 1]:.2f}")
+    stats_out = {"mean": float(df_clean[CO2].mean()), "median": float(df_clean[CO2].median()), "std": float(df_clean[CO2].std()),
+                 "min": float(df_clean[CO2].min()), "max": float(df_clean[CO2].max()), "skewness": float(df_clean[CO2].skew()),
+                 "main_fuels_share_pct": float(df_clean["Carburant"].isin(MAIN_FUELS).mean() * 100),
+                 "corr_consumption_co2": float(df_clean[[CONSO, CO2]].corr().iloc[0, 1])}
 
     df_main = df_clean[df_clean["Carburant"].isin(MAIN_FUELS)]
     plt.figure(figsize=(8, 5))
@@ -39,7 +43,7 @@ def target_and_consumption(df_clean, fig_dir):
     plt.legend(title="Fuel")
     plt.savefig(fig_dir / "Fig2_consumption_vs_co2.png", dpi=300, bbox_inches="tight")
     plt.close()
-    return df_main
+    return df_main, stats_out
 
 
 def correlation_matrix(df_clean, fig_dir):
@@ -120,16 +124,19 @@ def mass_power_spearman(df_clean):
                          "rows (all)": len(s), "rows (no Mercedes)": len(o),
                          "Spearman (all rows)": stats.spearmanr(s[col], s[CO2])[0],
                          "Spearman (no Mercedes)": stats.spearmanr(o[col], o[CO2])[0]})
-    print(pd.DataFrame(rows).round(2).to_string(index=False))
+    table = pd.DataFrame(rows).round(2)
+    print(table.to_string(index=False))
+    return table
 
 
 def run_eda(df_clean, fig_dir):
-    """Run the whole exploration ."""
+    """Run the whole exploration (takes a few seconds)."""
     fig_dir.mkdir(parents=True, exist_ok=True)
-    df_main = target_and_consumption(df_clean, fig_dir)
+    df_main, target_stats = target_and_consumption(df_clean, fig_dir)
     correlation_matrix(df_clean, fig_dir)
     fuel_and_power(df_clean, df_main, fig_dir)
     transmission(df_clean, fig_dir)
     brands(df_clean, fig_dir)
     print()
-    mass_power_spearman(df_clean)
+    spearman = mass_power_spearman(df_clean)
+    return {"target_stats": target_stats, "spearman": spearman}

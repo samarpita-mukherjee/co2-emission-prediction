@@ -1,0 +1,104 @@
+{
+  "rows_raw": 44850,
+  "columns_raw": 26,
+  "rows_without_co2": 39,
+  "duplicate_rows": 619,
+  "rows_clean": 44192,
+  "car_models": 449,
+  "car_models_train": 359,
+  "car_models_test": 90,
+  "rows_train": 39659,
+  "rows_test": 4533,
+  "mercedes_share_pct": 86.6,
+  "vans_share_pct": 72.6,
+  "co2": {
+    "mean": 199.35203204199854,
+    "median": 203.0,
+    "std": 38.36911410424111,
+    "min": 27.0,
+    "max": 572.0,
+    "skewness": -0.05836682525067328,
+    "main_fuels_share_pct": 99.5361151339609,
+    "corr_consumption_co2": 0.9695004243385359
+  },
+  "co2_mean_train": 203.8,
+  "co2_mean_test": 160.0,
+  "ranges": {
+    "power_kw": [
+      40.0,
+      559.3
+    ],
+    "mass_kg": [
+      825.0,
+      3094.0
+    ],
+    "gears": [
+      0.0,
+      8.0
+    ]
+  },
+  "categories": {
+    "fuel": [
+      "EE",
+      "EH",
+      "ES",
+      "ES/GN",
+      "ES/GP",
+      "FE",
+      "GH",
+      "GL",
+      "GN",
+      "GN/ES",
+      "GO",
+      "GP/ES"
+    ],
+    "body": [
+      "BERLINE",
+      "BREAK",
+      "CABRIOLET",
+      "COMBISPACE",
+      "COUPE",
+      "MINIBUS",
+      "MINISPACE",
+      "MONOSPACE",
+      "MONOSPACE COMPACT",
+      "TS TERRAINS/CHEMINS"
+    ],
+    "gearbox": [
+      "A",
+      "D",
+      "M",
+      "S",
+      "V"
+    ]
+  },
+  "infrequent": {
+    "fuel": [
+      "EE",
+      "ES/GN",
+      "ES/GP",
+      "FE",
+      "GH",
+      "GL",
+      "GN/ES",
+      "GP/ES"
+    ],
+    "body": [],
+    "gearbox": [
+      "S"
+    ]
+  },
+  "tuning": {
+    "use_tuned": false,
+    "params": {
+      "n_estimators": 300,
+      "learning_rate": 0.05,
+      "num_leaves": 31
+    }
+  },
+  "versions": {
+    "python": "3.9.13",
+    "scikit-learn": "1.6.1",
+    "lightgbm": "4.6.0"
+  }
+}

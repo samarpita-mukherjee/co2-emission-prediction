@@ -1,0 +1,13 @@
+# Presentation settings: light theme, minimal toolbar (no Deploy button), no usage statistics.
+[theme]
+base = "light"
+primaryColor = "#2F5496"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#EEF3FA"
+textColor = "#1F2937"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

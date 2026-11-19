@@ -229,6 +229,25 @@ Together, the regression and classification approaches provide two complementary
 
 ---
 
+
+
+## Streamlit app (for the presentation)
+
+Start it from the project folder:
+
+```
+py -m streamlit run app.py
+```
+
+The app only shows results that `main.py` prepared in advance (`results/` and `outputs/`), so it opens instantly and never
+retrains anything. The only live part is the prediction of one car with the saved model (`outputs/co2_final_model.joblib`).
+
+- Part 1 (regression): `app_pages/r1_data.py` to `r9_limits.py`.
+- Part 2 (classification): the pages show the files in `results/classification/1_setup`, `2_results` and `3_analysis`
+  (tables as `.csv`, figures as `.png`, text in `notes.md`). No code is needed to add them.
+- If `results/regression` is missing, run `py main.py` once: it creates the tables and the model.
+
+
 ## Technologies used
 
 - Python

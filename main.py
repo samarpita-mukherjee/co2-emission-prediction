@@ -1,7 +1,7 @@
 """
 Predicting the CO2 emissions (g/km) of cars - regression approach.
 
-Run the whole project with:   python main.py
+Run the whole project with:   py main.py
 Figures and the saved model go to the outputs/ folder.
 """
 import time
@@ -24,9 +24,8 @@ def main():
     t0 = time.time()
     data.FIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    step("CO2 emission prediction: Regression approach")
     # ---- 1. Load and clean --------------------------------------------------------------------------
-    step("1. Load and clean the data")
+    step("1. Loading and cleaning the data")
     df = data.load_data()
     print("Shape:", df.shape)
     print("Columns:", df.columns.tolist())
@@ -34,7 +33,7 @@ def main():
 
     # ---- 2. Exploration (figures and tables, nothing here feeds the model) ----------------------------
     step("2. Exploration: figures are saved in outputs/figures")
-    eda.run_eda(df_clean, data.FIG_DIR)
+    eda_out = eda.run_eda(df_clean, data.FIG_DIR)
 
     # ---- 3. Features and the split by car model -------------------------------------------------------
     step("3. Build the features and split by car model (train 80% / test 20%)")
@@ -42,15 +41,15 @@ def main():
     train_pos, test_pos = data.split_by_car_model(featured)
 
     # ---- 4. Feature choice: ablation on the TRAINING part only ----------------------------------------
-    step("4. Feature choice: ablation on the training part only")
-    modeling.ablation_table(featured.iloc[train_pos])
+    step("4. Feature choice: ablation on the training part only (2-3 minutes)")
+    ablation = modeling.ablation_table(featured.iloc[train_pos])
 
-    # ---- 5. Drop the other columns --------------------------------------------------------------
+    # ---- 5. Drop the other columns, checks --------------------------------------------------------------
     step("5. Drop the other columns, final feature check, sanity check")
     ds = data.build_dataset(featured, train_pos, test_pos)
     data.check_final_features(ds)
     print()
-    data.check_split(ds)
+    split_out = data.check_split(ds)
 
     # ---- 6. Compare seven models (cross-validation on the training set) -------------------------------
     step("6. Compare seven models: grouped 5-fold cross-validation, 5 repeats, training set only")
@@ -64,7 +63,7 @@ def main():
         print("NOTE: the winner is not LightGBM + weights. The next steps assume it: check before going on.")
 
     # ---- 7. Can tuning improve the model? --------------------------------------------------------------
-    step("7. Can tuning improve LightGBM? ")
+    step("7. Can tuning improve LightGBM?")
     tuning = modeling.tune_lgbm(ds)
 
     # ---- 8. Final model: test set, mistakes, CO2 label ------------------------------------------------
@@ -73,15 +72,25 @@ def main():
     test_table, test_pred = evaluation.final_test(ds, final_model)
 
     step("9. Where does the model make mistakes?")
-    evaluation.error_analysis(ds, test_pred[evaluation.FINAL_NAME], data.FIG_DIR / "Fig10_error_analysis.png")
+    error_out = evaluation.error_analysis(ds, test_pred[evaluation.FINAL_NAME], data.FIG_DIR / "Fig10_error_analysis.png")
 
     step("10. From the number to the CO2 label (classes A-G)")
-    evaluation.label_classes(ds, final_model, data.FIG_DIR / "Fig12_label_confusion.png")
+    label_out = evaluation.label_classes(ds, final_model, data.FIG_DIR / "Fig12_label_confusion.png")
 
     # ---- 11. Predict new cars and save the model --------------------------------------------------------
-    step("11. Predict the CO2 of new cars, and save the model")
+    step("11. Predicting the CO2 of new cars, and saving the model")
     modeling.predict_examples(final_model, ds.X_train.columns)
     modeling.save_model(final_model)
+
+    # ---- 12. Save the results for the Streamlit app -----------------------------------------------------
+    step("12. Saving the results tables for the app (results/regression)")
+    tables = {"ablation": ablation, "cv_models": cv_table, "tuning": tuning["comparison"], "final_test": test_table,
+              "split_composition": split_out["composition"], "largest_test_models": split_out["largest_test_models"].to_frame("% of test rows"),
+              "worst_mistakes": error_out["worst_mistakes"], "error_by_fuel": error_out["error_by_fuel"],
+              "class_counts": label_out["class_counts"], "class_scores": label_out["class_scores"],
+              "confusion_matrix": label_out["confusion_matrix"], "spearman": eda_out["spearman"]}
+    facts = evaluation.build_facts(df, df_clean, ds, final_model, tuning, eda_out["target_stats"])
+    evaluation.save_app_results(data.PROJECT_ROOT / "results" / "regression", tables, facts)
 
     step("Regression approach completed")
     print(f"\nDone in {(time.time() - t0) / 60:.1f} minutes. Figures: {data.FIG_DIR}")
